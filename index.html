@@ -3,17 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Object Detection and Distance Estimation</title>
+  <title>Advanced Object Detection</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Object Detection and Distance Estimation</h1>
+    <h1>Advanced Object Detection and Distance Estimation</h1>
     <button id="start-button">Start Camera</button>
-    <video id="camera" autoplay playsinline></video>
-    <canvas id="overlay"></canvas>
+    <div class="camera-container">
+      <video id="camera" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div id="sidebar">
+      <h2>Detection History</h2>
+      <ul id="detection-history"></ul>
+    </div>
     <p id="status">Loading model...</p>
   </div>
   <script src="script.js"></script>
