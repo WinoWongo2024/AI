@@ -2,7 +2,18 @@ const video = document.getElementById('camera');
 const canvas = document.getElementById('overlay');
 const statusElement = document.getElementById('status');
 const startButton = document.getElementById('start-button');
+const detectionHistory = document.getElementById('detection-history');
 const context = canvas.getContext('2d');
+
+// Utility function to add detection to history
+function addToDetectionHistory(label, distance) {
+  const listItem = document.createElement('li');
+  listItem.textContent = `${label} - ${distance.toFixed(2)} cm`;
+  detectionHistory.prepend(listItem);
+  if (detectionHistory.children.length > 10) { // Keep the last 10 detections
+    detectionHistory.removeChild(detectionHistory.lastChild);
+  }
+}
 
 // Function to set up camera
 async function setupCamera() {
@@ -31,15 +42,15 @@ async function loadModelAndDetect() {
   detectFrame(video, model);
 }
 
-// Detect objects in each frame
+// Detect objects every few frames to reduce load
 function detectFrame(video, model) {
   model.detect(video).then(predictions => {
     renderPredictions(predictions);
-    requestAnimationFrame(() => detectFrame(video, model));
+    setTimeout(() => detectFrame(video, model), 500); // Process every 500 ms
   });
 }
 
-// Render predictions with bounding boxes and labels
+// Render predictions with bounding boxes, labels, and history
 function renderPredictions(predictions) {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -54,11 +65,17 @@ function renderPredictions(predictions) {
     context.lineWidth = 2;
     context.strokeRect(x, y, width, height);
 
-    // Draw label and distance estimation
-    const label = `${prediction.class} (${(1 / prediction.bbox[3] * 1000).toFixed(2)} cm)`; // Placeholder for distance
+    // Calculate approximate distance (for demonstration)
+    const distance = 1 / prediction.bbox[3] * 1000; // Adjust based on object size
+    const label = `${prediction.class} (${distance.toFixed(2)} cm)`;
+
+    // Draw label and distance
     context.fillStyle = '#00FF00';
     context.font = '16px Arial';
     context.fillText(label, x, y > 10 ? y - 5 : 10);
+
+    // Update detection history
+    addToDetectionHistory(prediction.class, distance);
   });
 }
 
