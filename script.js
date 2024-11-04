@@ -2,11 +2,12 @@ const video = document.getElementById('camera');
 const canvas = document.getElementById('overlay');
 const statusElement = document.getElementById('status');
 const startButton = document.getElementById('start-button');
+const detectedTextElement = document.getElementById('detected-text');
 const context = canvas.getContext('2d');
 
-let model = null; // Global variable to store the model
+let model = null; // Global variable to store the object detection model
 
-// Function to set up camera
+// Function to set up the camera
 async function setupCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -17,30 +18,31 @@ async function setupCamera() {
     video.style.display = 'block';
     canvas.style.display = 'block';
     startButton.style.display = 'none'; // Hide start button
-    loadModel(); // Load model and start detection
+    loadModels(); // Load both models and start detection
   } catch (error) {
     console.error("Error accessing camera: ", error);
     statusElement.textContent = "Camera access denied or not supported on this device.";
   }
 }
 
-// Load COCO-SSD model
-async function loadModel() {
-  statusElement.textContent = 'Loading model...';
+// Load the object detection model and start detecting
+async function loadModels() {
+  statusElement.textContent = 'Loading models...';
   model = await cocoSsd.load();
-  statusElement.textContent = 'Model loaded. Detecting objects...';
-  detectObjects(); // Start the detection loop
+  statusElement.textContent = 'Models loaded. Detecting objects and text...';
+  detectObjectsAndText(); // Start detection loop
 }
 
-// Detection loop
-function detectObjects() {
+// Detection loop for objects and text
+function detectObjectsAndText() {
   model.detect(video).then(predictions => {
-    renderPredictions(predictions);
-    requestAnimationFrame(detectObjects); // Continue detecting
+    renderPredictions(predictions); // Render object predictions
+    detectText(); // Run text detection
+    requestAnimationFrame(detectObjectsAndText); // Continue the detection loop
   });
 }
 
-// Render predictions with bounding boxes and labels
+// Render object predictions on the canvas
 function renderPredictions(predictions) {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -55,15 +57,25 @@ function renderPredictions(predictions) {
     context.lineWidth = 2;
     context.strokeRect(x, y, width, height);
 
-    // Calculate approximate distance (for demonstration)
-    const distance = (1 / height * 1000).toFixed(2); // Placeholder for distance calculation
+    // Display label and estimated distance
+    const distance = (1 / height * 1000).toFixed(2); // Placeholder distance calculation
     const label = `${prediction.class} (${distance} cm)`;
-
-    // Draw label and distance
     context.fillStyle = '#00FF00';
     context.font = '16px Arial';
     context.fillText(label, x, y > 10 ? y - 5 : 10);
   });
+}
+
+// Run OCR to detect text from the video feed
+function detectText() {
+  Tesseract.recognize(video, 'eng', { logger: m => console.log(m) })
+    .then(({ data: { text } }) => {
+      detectedTextElement.textContent = text.trim() || "No text detected.";
+    })
+    .catch(error => {
+      console.error("Error detecting text:", error);
+      detectedTextElement.textContent = "Error detecting text.";
+    });
 }
 
 // Event listener for Start Camera button
