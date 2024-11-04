@@ -6,6 +6,7 @@ const detectedTextElement = document.getElementById('detected-text');
 const context = canvas.getContext('2d');
 
 let model = null; // Global variable to store the object detection model
+let isTextDetectionRunning = false; // Flag to prevent multiple concurrent OCR runs
 
 // Function to set up the camera
 async function setupCamera() {
@@ -18,7 +19,7 @@ async function setupCamera() {
     video.style.display = 'block';
     canvas.style.display = 'block';
     startButton.style.display = 'none'; // Hide start button
-    loadModels(); // Load both models and start detection
+    loadModel(); // Load model and start detection
   } catch (error) {
     console.error("Error accessing camera: ", error);
     statusElement.textContent = "Camera access denied or not supported on this device.";
@@ -26,20 +27,29 @@ async function setupCamera() {
 }
 
 // Load the object detection model and start detecting
-async function loadModels() {
+async function loadModel() {
   statusElement.textContent = 'Loading models...';
   model = await cocoSsd.load();
   statusElement.textContent = 'Models loaded. Detecting objects and text...';
-  detectObjectsAndText(); // Start detection loop
+  detectObjects(); // Start detection loop
 }
 
-// Detection loop for objects and text
-function detectObjectsAndText() {
+// Object detection loop with throttling
+function detectObjects() {
   model.detect(video).then(predictions => {
     renderPredictions(predictions); // Render object predictions
-    detectText(); // Run text detection
-    requestAnimationFrame(detectObjectsAndText); // Continue the detection loop
+
+    // Run text detection less frequently
+    if (!isTextDetectionRunning) {
+      isTextDetectionRunning = true;
+      setTimeout(detectText, 2000); // Run OCR every 2 seconds
+    }
+  }).catch(error => {
+    console.error("Object detection error:", error);
   });
+
+  // Run object detection every 200ms to reduce load
+  setTimeout(detectObjects, 200);
 }
 
 // Render object predictions on the canvas
@@ -66,15 +76,18 @@ function renderPredictions(predictions) {
   });
 }
 
-// Run OCR to detect text from the video feed
+// Run OCR to detect text from the video feed, throttled
 function detectText() {
-  Tesseract.recognize(video, 'eng', { logger: m => console.log(m) })
+  Tesseract.recognize(video, 'eng')
     .then(({ data: { text } }) => {
       detectedTextElement.textContent = text.trim() || "No text detected.";
     })
     .catch(error => {
-      console.error("Error detecting text:", error);
+      console.error("Text detection error:", error);
       detectedTextElement.textContent = "Error detecting text.";
+    })
+    .finally(() => {
+      isTextDetectionRunning = false; // Allow next text detection
     });
 }
 
