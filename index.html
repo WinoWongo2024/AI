@@ -3,18 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Object Detection</title>
+  <title>Advanced Object & Text Detection</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Real-Time Object Detection</h1>
+    <h1>Real-Time Object & Text Detection</h1>
     <button id="start-button">Start Camera</button>
     <div class="camera-container">
       <video id="camera" autoplay playsinline></video>
       <canvas id="overlay"></canvas>
+    </div>
+    <div id="text-output">
+      <h2>Detected Text</h2>
+      <p id="detected-text">No text detected yet...</p>
     </div>
     <p id="status">Loading model...</p>
   </div>
